@@ -1,0 +1,1372 @@
+<template>
+  <div class="station">
+       <!-- 面包屑导航 -->
+    <Breadcrumb :levelList="levelList"></Breadcrumb>
+       <!-- 主体部分 -->
+       <div class="main">
+         <div class="left">
+            <belongUnit :unitList="unitList"></belongUnit>
+         </div>
+         <div class="right">
+         <div class="Inquire">
+           <!-- 查询表格 -->
+              <el-form :inline="true" :model="form" class="demo-form-inline" ref="researchForm">
+                      <el-row>
+                        <el-col :span="5" style="padding:0">
+                          <el-form-item label="中转站名称：" prop="name">
+                            <el-input v-model="form.name" placeholder="请输入中转站名称"></el-input>
+                          </el-form-item>
+                        </el-col>
+                        <el-col :span="5" style="padding:0">
+                          <el-form-item label="所属单位：" style="margin-left:16px" prop="companyId">
+                            <el-select v-model="form.companyId" placeholder="全部">
+                              <el-option
+                              v-for="item in companyIdList"
+                              :key="item.id"
+                              :label="item.name"
+                              :value="item.id"
+                              ></el-option>
+                            </el-select>
+                          </el-form-item>
+                        </el-col>
+                        <el-col :span="5" style="padding:0">
+                          <el-form-item label="所属街道：" style="margin-left:16px" prop="regionLocaleId">
+                            <el-cascader
+                            v-model="form.regionLocaleId"
+                            :options="regionLocaleList"
+                            :props="{ expandTrigger: 'hover', label: 'name', value: 'id', children: 'regionLocales', checkStrictly: 'true'}"
+                            @change="regionLocaleHandleChange"></el-cascader>
+                          </el-form-item>
+                        </el-col>
+                        <el-col  style="padding:0; width:280px;">
+                          <el-form-item
+                            style="padding-top:40px;box-sizing: border-box; width:auto; margin-left:16px"
+                          >
+                            <el-button type="primary" @click="searchTransferStation">确定</el-button>
+                            <el-button type="success" @click="isShow">{{text}}</el-button>
+                            <el-button @click="resetSearchForm">重置</el-button>
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
+                      <!-- 隐藏的表单 -->
+                    <el-row v-if="show">
+                      <el-col :span="5" style="padding:0">
+                        <el-form-item label="是否设置区域：" prop="isSetArea">
+                          <el-select v-model="form.isSetArea" placeholder="全部">
+                            <el-option
+                              label="是"
+                              value="true"
+                            ></el-option>
+                            <el-option
+                            label="否"
+                            value="false"
+                            ></el-option>
+                          </el-select>
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="5" style="padding:0;margin-left:16px">
+                      </el-col>
+                      <el-col :span="5" style="padding:0;margin-left:16px">
+                      </el-col>
+                      <el-col style="padding:0; width:250px;"></el-col>
+                    </el-row>
+              </el-form>
+         </div>
+           <!-- 新增  导出 -->
+        <el-row>
+          <el-button type="primary" @click="isNewDrawer">新增</el-button>
+          <el-button type="warning" style="float: right;" @click="exportExcel">导出</el-button>
+        </el-row>
+              <!-- 表格 -->
+       <el-table :data="tableData" style="width: 100%;margin-top:16px">
+         <el-table-column type="index" label="No." width="50"></el-table-column>
+          <el-table-column prop="companyName" label="所属单位" ></el-table-column>
+          <el-table-column prop="regionLocaleName" label="所属街道" ></el-table-column>
+          <el-table-column prop="name" label="中转站名称"></el-table-column>
+          <el-table-column prop="status" label="状态">
+           <template slot-scope="{row}">
+            <span v-if="row.status === 0" style="color:green">正常</span>
+            <span v-if="row.status === 1" style="color:red">停用</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200">
+          <template v-slot="{row}">
+            <span v-show="currentCompanyIds.indexOf(row.companyId) !== -1 && privilegeCodes.indexOf('basic:transeferStation:edit') !== -1" class="span" @click="isEdit(row.id)">编辑</span>&nbsp;&nbsp;
+            <span style="color:#ccc">|</span>&nbsp;&nbsp;
+            <span class="span" @click="viewDetail(row.id)">查看详情</span>&nbsp;&nbsp;
+            <span style="color:#ccc">|</span>&nbsp;&nbsp;
+            <span class="span"  v-show="currentCompanyIds.indexOf(row.companyId) !== -1 && privilegeCodes.indexOf('basic:transeferStation:location') !== -1" @click="isPosition(row.id)">定位</span>&nbsp;&nbsp;
+            <span style="color:#ccc">|</span>&nbsp;&nbsp;
+            <span v-show="currentCompanyIds.indexOf(row.companyId) !== -1 && privilegeCodes.indexOf('basic:transeferStation:delete') !== -1" class="span" @click="showDeleteDrawer(row.id)">删除</span>
+          </template>
+        </el-table-column>
+      </el-table>
+              <!-- 分页器 -->
+        <el-pagination
+          :page-sizes="[ 20, 50, 100]"
+          :page-size="pageSize"
+          :current-page="currentPage"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          style="margin-top:15px"
+        ></el-pagination>
+         </div>
+
+       </div>
+        <!-- 新增的抽屉框 -->
+          <el-drawer
+            title="新建中转站"
+             :visible.sync="newDrawer"
+             :before-close="handleClose">
+            <el-form   :model="drawerForm"  :rules="rules" ref="createRuleForm">
+              <el-row :gutter="30">
+                <el-col :span="12">
+                       <el-form-item label="所属单位：" prop="companyId">
+                                        <el-select v-model="drawerForm.companyId" placeholder="全部">
+                                                <el-option
+                                                  v-for="item in companyIdList"
+                                                  :key="item.id"
+                                                  :label="item.name"
+                                                  :value="item.id"
+                                                ></el-option>
+                                        </el-select>
+                      </el-form-item>
+                  </el-col>
+                  <el-col  :span="12">
+                      <el-form-item label="所属街道：" prop="regionLocaleId">
+                        <el-cascader
+                        v-model="drawerForm.regionLocaleId"
+                        :options="regionLocaleList"
+                        :props="{ expandTrigger: 'hover', label: 'name', value: 'id', children: 'regionLocales', checkStrictly: 'true'}"
+                        @change="regionLocaleHandleChange"></el-cascader>
+                      </el-form-item>
+                </el-col>
+              </el-row>
+              <!-- ------------ -->
+                <el-row  :gutter="30">
+                <el-col :span="12">
+                       <el-form-item label="中转站名称：" prop="name">
+                          <el-input v-model="drawerForm.name" placeholder="请输入中转站名称"></el-input>
+                      </el-form-item>
+                  </el-col>
+                  <el-col  :span="12">
+                      <el-form-item label="地址：" prop="address">
+                        <el-input v-model="drawerForm.address" placeholder="请输入地址"></el-input>
+                      </el-form-item>
+                </el-col>
+              </el-row>
+              <!-- --------------- -->
+               <el-row  :gutter="30">
+                <el-col :span="12">
+                       <el-form-item label="启用日期：" prop="useDate">
+                            <el-date-picker
+                                v-model="drawerForm.useDate"
+                                type="datetime"
+                                value-format="yyyy-MM-dd hh:mm:ss"
+                                placeholder="选择日期">
+                              </el-date-picker>
+                      </el-form-item>
+                  </el-col>
+                  <el-col  :span="12">
+                      <el-form-item label="建筑面积：" prop="constructionArea">
+                          <el-input v-model="drawerForm.constructionArea" placeholder="请输入建筑面积"></el-input>
+                      </el-form-item>
+                </el-col>
+              </el-row>
+              <!-- --------------- -->
+              <el-row  :gutter="30">
+                <el-col :span="12">
+                       <el-form-item label="负责人：" prop="employeeId">
+                                        <!-- <el-select v-model="drawerForm.employeeId" placeholder="全部">
+                                                <el-option
+                                                  v-for="item in employeeList"
+                                                  :key="item.id"
+                                                  :label="item.name"
+                                                  :value="item.id"
+                                                ></el-option>
+                                      </el-select> -->
+                                      <el-autocomplete
+                                        v-model="drawerForm.employeeId"
+                                        :fetch-suggestions="querySearch"
+                                        placeholder="全部"
+                                        @select="handleSelect"
+                                      ></el-autocomplete>
+                      </el-form-item>
+                  </el-col>
+                  <el-col  :span="12">
+                      <el-form-item label="场地电话：" prop="fieldPhone">
+                             <el-input v-model="drawerForm.fieldPhone" placeholder="请输入场地电话"></el-input>
+                      </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                    <el-form-item label="照片：" class="last-item" prop="picUrl">
+                         <el-upload
+                          class="avatar-uploader"
+                          action="http://112.65.228.185:8004/upload/singleImage"
+                          :show-file-list="false"
+                          :headers="importHeaders"
+                          accept=".jpg,.png"
+                          :on-success="handleAvatarSuccess"
+                          >
+                          <img v-if="imageUrl" :src="drawerForm.picUrl" class="avatar" />
+                          <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                        </el-upload>
+                      </el-form-item>
+              </el-row>
+              </el-form>
+                <div class="saveAndCancle">
+                       <el-button @click="newDrawer = false">取 消</el-button>
+                        <el-button type="primary" @click="addTransferStation">确 定</el-button>
+                </div>
+          </el-drawer>
+        <!-- 编辑的抽屉框 -->
+          <el-drawer
+            title="编辑中转站"
+            :visible.sync="editDrawer"
+            :before-close="handleClose">
+            <el-form   :model="drawerForm"  :rules="rules">
+              <el-row :gutter="30">
+                <el-col :span="12">
+                       <el-form-item label="所属单位：" prop="unit">
+                                        <el-select v-model="drawerForm.companyId" placeholder="全部">
+                                            <el-option
+                                            v-for="item in companyIdList"
+                                            :key="item.id"
+                                            :label="item.name"
+                                            :value="item.id"
+                                          ></el-option>
+                                        </el-select>
+                      </el-form-item>
+                  </el-col>
+                  <el-col  :span="12">
+                      <el-form-item label="所属街道：" prop="street">
+                            <el-cascader
+                            v-model="drawerForm.regionLocaleId"
+                            :options="regionLocaleList"
+                            :props="{ expandTrigger: 'hover', label: 'name', value: 'id', children: 'regionLocales', checkStrictly: 'true'}"
+                            @change="regionLocaleHandleChange"></el-cascader>
+                      </el-form-item>
+                </el-col>
+              </el-row>
+              <!-- ------------ -->
+                <el-row  :gutter="30">
+                <el-col :span="12">
+                       <el-form-item label="中转站名称：" prop="name">
+                          <el-input v-model="drawerForm.name" placeholder="请输入中转站名称"></el-input>
+                      </el-form-item>
+                  </el-col>
+                  <el-col  :span="12">
+                      <el-form-item label="地址：" prop="address">
+                        <el-input v-model="drawerForm.address" placeholder="请输入地址"></el-input>
+                      </el-form-item>
+                </el-col>
+              </el-row>
+              <!-- --------------- -->
+               <el-row  :gutter="30">
+                <el-col :span="12">
+                  <el-form-item label="启用日期：" prop="useDate">
+                        <el-date-picker
+                                  v-model="drawerForm.useDate"
+                                  type="datetime"
+                                  value-format="yyyy-MM-dd hh:mm:ss"
+                                  placeholder="选择日期">
+                                </el-date-picker>
+                        </el-form-item>
+                  </el-col>
+                  <el-col  :span="12">
+                      <el-form-item label="建筑面积：" prop="area">
+                          <el-input v-model="drawerForm.constructionArea" placeholder="请输入建筑面积"></el-input>
+                      </el-form-item>
+                </el-col>
+              </el-row>
+              <!-- --------------- -->
+              <el-row  :gutter="30">
+                <el-col :span="12">
+                       <el-form-item label="负责人：">
+                            <el-autocomplete
+                            v-model="drawerForm.employeeId"
+                            :fetch-suggestions="querySearch"
+                            placeholder="全部"
+                            @select="handleSelect"
+                          ></el-autocomplete>
+                      </el-form-item>
+                  </el-col>
+                  <el-col  :span="12">
+                      <el-form-item label="场地电话：">
+                             <el-input v-model="drawerForm.fieldPhone" placeholder="请输入场地电话"></el-input>
+                      </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                    <el-form-item label="照片：" class="last-item">
+                      <el-upload
+                        class="avatar-uploader"
+                        action="http://112.65.228.185:8004/upload/singleImage"
+                        :show-file-list="false"
+                        :headers="importHeaders"
+                        accept=".jpg,.png"
+                        :on-success="handleAvatarSuccess"
+                        >
+                        <img v-if="imageUrl" :src="drawerForm.picUrl" class="avatar" />
+                        <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                      </el-upload>
+                      </el-form-item>
+              </el-row>
+              </el-form>
+                <div class="saveAndCancle">
+                       <el-button @click="editDrawer = false">取 消</el-button>
+                       <el-button type="primary" @click="editDone">确 定</el-button>
+                </div>
+          </el-drawer>
+        <!-- 查看详情的抽屉框 -->
+          <el-drawer
+          title="查看详情"
+          :visible.sync="viewDrawer"
+          :direction="direction"
+          :before-close="handleClose">
+                  <el-row style="height:100%;padding:31px">
+                            <el-col :span="12" style="height:100%">
+                                <div class="info">
+                                  <el-form style="padding:0" :model="drawerForm" >
+                                    <el-form-item  label="所属单位">{{drawerForm.companyName}}</el-form-item>
+                                    <el-form-item  label="所属街道">{{drawerForm.regionLocaleName}}</el-form-item>
+                                    <el-form-item  label="中转站名称">{{drawerForm.name}}</el-form-item>
+                                    <el-form-item  label="地址">{{drawerForm.address}}</el-form-item>
+                                    <el-form-item  label="启用日期">{{drawerForm.useDate}}</el-form-item>
+                                    <el-form-item  label="建筑面积">{{drawerForm.constructionArea}}</el-form-item>
+                                    <el-form-item  label="负责人">{{drawerForm.employeeName}}</el-form-item>
+                                    <el-form-item  label="场地电话">{{drawerForm.fieldPhone}}</el-form-item>
+                                  </el-form>
+                                </div>
+                            </el-col>
+                            <el-col :span="12" style="height:100%">
+                              <div class="dynamic">
+                                <div class="all">
+                                    <span>所有动态</span>
+                                    <el-select v-model="time" placeholder="请选择" style="width:96px;height:32px !important;"
+                                    @change="isChange"
+                                    >
+                                              <el-option
+                                                v-for="item in options9"
+                                                :key="item.value"
+                                                :label="item.label"
+                                                :value="item.value">
+                                              </el-option>
+                                    </el-select>
+                                    <i v-if="!selst" class="el-icon-caret-bottom arrow"></i>
+                                    <i v-if="selst" class="el-icon-caret-top arrow"></i>
+                                </div>
+                                <!-- all info -->
+                                <div class="box">
+                                  <div class="allInfo" v-for="item in infoList" :key="item.id">
+                                  <div class="top" style="margin-bottom:5px">
+                                    <div class="oper" style="color:rgba(144,147,153,1);"> <span >{{item.editor}}</span> <span>{{item.isCreated? '创建':'编辑'}}</span>了&nbsp;&nbsp;&nbsp;<span>{{item.mainContent}}</span></div>
+                                    <div class="infoTime" style="color:rgba(144,147,153,1);;">
+                                      {{item.editTime}}
+                                      </div>
+                                  </div>
+                                  <div class="bottom"> <span style="color:rgba(144,147,153,1); margin-right:10px">{{item.isCreated? '创建':'修改'}}</span><span> {{item.isCreated? item.mainContent:item.fieldName}}</span></div>
+                                </div>
+                                </div>
+                              </div>
+                            </el-col>
+                </el-row>
+              <div class="saveAndCancle">
+                    <el-button @click="viewDrawer=false">取 消</el-button>
+                    <el-button type="primary">确 定</el-button>
+              </div>
+          </el-drawer>
+        <!-- 定位的抽屉框 -->
+          <el-drawer
+            title="定位"
+            :visible.sync="positionDrawer"
+            :direction="direction"
+            :before-close="handleClose">
+            <el-form v-model="positionForm" style="padding-top: 16px">
+                    <el-row type="flex" class="row-bg" justify="space-between">
+                         <el-col style="width:250px;position: relative;">
+                           <el-form-item style="position: absolute;bottom: 0">
+                                    <el-button type="primary" @click="isNewPoint">新增点位</el-button>
+                                    <el-button type="primary" @click="delPointLocation">删除点位</el-button>
+                           </el-form-item>
+                        </el-col>
+                         <el-col :span="5">
+                           <el-form-item  label="检索地址：" style="position: relative;">
+                             <el-input v-model="positionForm.address" @input="isSearch" placeholder="请输入详细地址"></el-input>
+                             <div class="Search_address" v-if="restaurants.length!==0">
+                               <ul>
+                                   <li  v-for="(item,index) in restaurants" :key="index" @click="isShowtext(item.name,item.location)" style="cursor:pointer;">
+                                     <div style="width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                               {{item.name}}
+                                               {{item.district.length===0? [] :item.district}}
+                                     </div>
+                                   </li>
+                               </ul>
+                             </div>
+                             <!-- <el-amap-search-box class="search-box" :search-option="searchOption" :on-search-result="onSearchResult"></el-amap-search-box> -->
+                           </el-form-item>
+                         </el-col>
+                          <el-col  :span="5"  :offset="8" style="margin-right:20px">
+                           <el-form-item  label="工作范围：">
+                                         <el-select v-model="positionForm.range" placeholder="全部" @change="changeRange">
+                                                <el-option
+                                                  v-for="item in options10"
+                                                  :key="item.value"
+                                                  :label="item.label"
+                                                  :value="item.value"
+                                                ></el-option>
+                                        </el-select>
+                           </el-form-item>
+                         </el-col>
+                   </el-row>
+            </el-form>
+            <div class="map">
+                 <div class="amap-page-container">
+                    <div :style="{width:'100%',height:'60vh'}">
+                       <el-amap vid="amap" :plugin="plugin" class="amap-demo" :center="center" :zoom="zoom" >
+                       <el-amap-marker v-for="(marker, index) in markers" :key="marker.index" :position="marker.position" :icon="marker.icon" :title="marker.title" :events="marker.events" :visible="marker.visible" :draggable="marker.draggable" :vid="index"></el-amap-marker>
+                       <el-amap-circle v-for="circle in circles" :key="circle.index"  fillColor='#dae6f0' strokeOpacity='0' strokeColor='#000' :center="circle.center" :radius="circle.radius" :fill-opacity="circle.fillOpacity" ></el-amap-circle>
+                </el-amap>
+                    </div>
+            </div>
+            </div>
+                <div class="saveAndCancle">
+                       <el-button @click="positionDrawer=false">取 消</el-button>
+                       <el-button type="primary">确 定</el-button>
+                </div>
+          </el-drawer>
+  </div>
+</template>
+
+<script>
+import Breadcrumb from '../../components/Breadcrumb';
+import belongUnit from '../../components/belong-unit'
+// transferStationEdit,
+import { getDataFilter, transferStationShareList, childCompanyList, employeeListing, getRegionLocale, transferStationView, transferStationAdd, transferStationDelete, transferStationEdit, dataDictItem, transferStationExport, transferStationLocaion } from '../../api/getData'
+import axios from 'axios'
+export default {
+  data () {
+    let self = this;
+    return {
+      levelList: [{ title: '环卫设施点' }, { title: '中转站' }],
+      unitList: [],
+      show: false,
+      text: '展开',
+      time: 0,
+      selst: false,
+      currentPage: 1,
+      pageSize: 20,
+      checkList: [],
+      currentCompanyIds: [],
+      privilegeCodes: [],
+      importHeaders: { 'access-token': localStorage.getItem('token') },
+      imageUrl: false,
+      // 新增框内所属单位
+      companyIdList: [],
+      // 负责人列表
+      employeeList: [],
+      // 街道级联
+      regionLocaleList: [],
+      newDrawer: false,
+      editDrawer: false,
+      viewDrawer: false,
+      dialogImageUrl: '',
+      dialogVisible: false,
+      positionDrawer: false,
+      restaurants: [],
+      transferStationId: '',
+      peopleRestaurants: [],
+      recordId: '',
+      direction: 'rtl',
+      total: 0,
+      form: {
+        name: '',
+        companyId: '',
+        regionLocaleId: '',
+        isSetArea: ''
+      },
+      drawerForm: {
+        companyId: '',
+        regionLocaleId: '',
+        name: '',
+        address: '',
+        useDate: '',
+        constructionArea: '',
+        employeeId: '',
+        fieldPhone: '',
+        picUrl: ''
+      },
+      positionForm: {
+        address: '',
+        range: 1
+      },
+      options1: [],
+      options2: [],
+      options3: [],
+      options4: [],
+      options5: [],
+      options6: [],
+      options8: [],
+      options9: [
+        {
+          value: 0,
+          label: '近一周'
+        },
+        {
+          value: 1,
+          label: '近一月'
+        },
+        {
+          value: 2,
+          label: '近一年'
+        }
+      ],
+      options10: [
+        {
+          value: 1,
+          label: '500米'
+        },
+        {
+          value: 2,
+          label: '1000米'
+        },
+        {
+          value: 3,
+          label: '1500米'
+        },
+        {
+          value: 4,
+          label: '2000米'
+        }
+      ],
+      // 表格列表
+      tableData: [],
+      rules: {
+        companyId: [
+          { required: true, message: '请选择所属单位', trigger: 'blur' }
+        ],
+        regionLocaleId: [
+          { required: true, message: '请选择所属街道', trigger: ['blur', 'change'] }
+        ],
+        name: [
+          { required: true, message: '请输入中转站名称', trigger: 'blur' }
+        ],
+        address: [
+          { required: true, message: '请输入地址', trigger: 'blur' }
+        ],
+        constructionArea: [
+          {
+            pattern: /^[0-9]+$/,
+            message: '仅且只可输入数字字符'
+          }
+        ]
+      },
+      infoList: [
+        {
+          id: 1,
+          editor: 'xxx',
+          isCreated: false,
+          mainContent: '菜单名称',
+          editTime: '2019.12.21 13:16',
+          fieldName: '总经办'
+        }
+      ],
+      // 地图插件
+      qaqqq: [],
+      address: '',
+      // 地图缩放
+      zoom: 14,
+      // 初始中心
+      // center: [114.406539, 30.492921],
+      center: [31.395315, 31.395315],
+      lng: 0,
+      lat: 0,
+      loaded: false,
+      // 点击显示的标记默认的定位
+      markers: [{
+        position: [31.395315, 31.395315]
+      }],
+
+      // 圆覆盖圈
+      circles: [
+        {
+          center: [31.395315, 31.395315],
+          radius: 500,
+          fillOpacity: 0.5,
+          events: {
+            click: () => {
+              // alert('click');
+            }
+          }
+        }
+      ],
+      //  定位
+      plugin: [{
+        enableHighAccuracy: true, // 是否使用高精度定位，默认:true
+        pName: 'Geolocation',
+        events: {
+          init (o) {
+            // o 是高德地图定位插件实例
+            o.getCurrentPosition((status, result) => {
+              console.log('aaaa');
+              if (result && result.position) {
+                console.log(window);
+                window.lng = result.position.lng
+                window.lat = result.position.lat
+                if (self.lng === 0) {
+                  self.lng = result.position.lng;
+                  self.lat = result.position.lat;
+                  // window.lng = self.lng
+                  // window.lat = self.lat
+                  // this.lng = result.position.lng
+                  // this.lat = result.position.lat
+                  console.log(self.lng, self.lat);
+
+                  // 初始定位地图中心位置
+                  self.center = [self.lng, self.lat];
+                  // 初始定位圆的位置
+                  self.circles[0].center = [self.lng, self.lat]
+                  // 初始定位标记的位置
+                  self.markers[0].position = [self.lng, self.lat]
+
+                  self.loaded = true;
+                  self.$nextTick();
+                } else {
+                  // 初始定位地图中心位置
+                  self.center = [self.lng, self.lat];
+                  // 初始定位圆的位置
+                  self.circles[0].center = [self.lng, self.lat]
+                  // 初始定位标记的位置
+                  self.markers[0].position = [self.lng, self.lat]
+                }
+              }
+            });
+
+            console.log(self.lng);
+          }
+        }
+      }]
+    };
+  },
+  components: {
+    Breadcrumb,
+    belongUnit
+  },
+  created () {
+    this.fn()
+  },
+  methods: {
+    handleClose (done) {
+      this.$confirm('确认关闭？')
+        .then(_ => {
+          done();
+        })
+        .catch(_ => {});
+    },
+    isShow () {
+      this.show = !this.show
+      if (!this.show) {
+        this.text = '展开'
+      } else {
+        this.text = '收起'
+      }
+    },
+    // 打开编辑的抽屉框
+    isEdit (id) {
+      // this.$refs.createRuleForm.resetFields()
+      // this.imageUrl = ''
+      this.editDrawer = true
+      transferStationView(id).then(res => {
+        console.log(res)
+        if (res.data.code === 200) {
+          this.drawerForm = res.data.data
+          this.drawerForm.employeeId = res.data.data.employeeName
+          this.imageUrl = this.drawerForm.picUrl
+          this.drawerForm.id = id
+          console.log(this.drawerForm);
+        }
+      })
+    },
+    editDone () {
+      // console.log('编辑成功');
+      let aaa2 = this.peopleRestaurants.filter(res => res.value === this.drawerForm.employeeId)
+      this.drawerForm.employeeId = aaa2[0].id
+      if (this.drawerForm.regionLocaleId instanceof Array) {
+        this.drawerForm.regionLocaleId = this.drawerForm.regionLocaleId.pop()
+      }
+      const data = this.drawerForm
+      // console.log(this.drawerForm);
+      console.log(112, transferStationEdit);
+
+      transferStationEdit(data).then(res => {
+        console.log(res);
+        if (res.data.code === 200) {
+          this.editDrawer = false
+          this.$message.success('编辑成功')
+        }
+      })
+    },
+    isDetails (row) {
+      this.viewDrawer = true
+    },
+    isChange () {
+      this.selst = !this.selst
+      this.timeChange()
+    },
+    isNewDrawer () {
+      this.newDrawer = true
+      this.$nextTick(() => {
+        this.$refs.createRuleForm.resetFields()
+      })
+      console.log(this.drawerForm);
+      // this.drawerForm = {
+      //   companyId: '',
+      //   regionLocaleId: '',
+      //   name: '',
+      //   address: '',
+      //   useDate: '',
+      //   constructionArea: '',
+      //   employeeId: '',
+      //   fieldPhone: '',
+      //   picUrl: ''
+      // }
+      this.drawerForm.regionLocaleId = ''
+      this.drawerForm.name = ''
+      this.drawerForm.address = ''
+      this.drawerForm.useDate = ''
+      this.drawerForm.constructionArea = ''
+      this.drawerForm.employeeId = ''
+      this.drawerForm.fieldPhone = ''
+      this.drawerForm.picUrl = ''
+      this.imageUrl = ''
+    },
+    isPosition (id) {
+      console.log(window.lng);
+
+      this.positionDrawer = true
+      this.transferStationId = id
+      this.positionForm.address = ''
+      // 点位回显
+      this.$nextTick(() => {
+        transferStationView(id).then(res => {
+          if (res.data.code === 200) {
+            console.log(res.data.data.latitude, res.data.data.longitude);
+
+            if (res.data.data.latitude !== null) {
+              console.log('有点位');
+              this.lng = res.data.data.longitude
+              this.lat = res.data.data.latitude
+              this.center = [+res.data.data.longitude, +res.data.data.latitude]
+              this.markers[0].position = [+res.data.data.longitude, +res.data.data.latitude]
+              this.circles[0].center = [+res.data.data.longitude, +res.data.data.latitude]
+              // this.address = res.data.data.address
+              // console.log(this.center, this.markers[0].position, this.circles[0].center);
+            } else {
+              this.center = [window.lng, window.lat]
+              this.markers[0].position = [window.lng, window.lat]
+              this.circles[0].center = [window.lng, window.lat]
+            }
+          }
+        })
+      })
+    },
+
+    // 地理编码id
+    // 新增点位
+    isNewPoint () {
+      // console.log(transferStationLocaion);
+      // axios({
+      //   method: 'GET',
+      //   url: 'https://restapi.amap.com/v3/geocode/geo?key=f510d999ca866fcec046e0bf05431804&address=' + this.positionForm.address
+      // }).then((res) => {
+      //   console.log(res);
+      //   if (res.data.infocode === '10000') {
+      //     this.center = res.data.geocodes[0].location.split(',')
+      //     this.markers[0].position = res.data.geocodes[0].location.split(',')
+      //     this.circles[0].center = res.data.geocodes[0].location.split(',')
+      //   }
+      // })
+
+      const data = {
+        id: this.transferStationId,
+        address: this.positionForm.address,
+        rangeType: this.positionForm.range,
+        longitude: this.center[0],
+        latitude: this.center[1]
+      }
+      transferStationLocaion(data).then(res => {
+        console.log(res);
+        if (res.data.code === 200) {
+          this.$message.success('成功添加点位')
+        }
+      })
+    },
+
+    // 删除点位
+    delPointLocation () {
+      const data = {
+        id: this.transferStationId,
+        address: this.positionForm.address,
+        rangeType: this.positionForm.range
+      }
+      transferStationLocaion(data).then(res => {
+        console.log(res);
+        if (res.data.code === 200) {
+          this.$message.success('成功删除点位')
+          this.center = [window.lng, window.lat]
+          this.markers[0].position = [window.lng, window.lat]
+          this.circles[0].center = [window.lng, window.lat]
+        }
+      })
+    },
+    // 根据用户输入的地址搜索
+    isSearch () {
+      if (this.positionForm.address) {
+        axios({
+          method: 'GET',
+          url: 'https://restapi.amap.com/v3/assistant/inputtips?key=f510d999ca866fcec046e0bf05431804&keywords=' + this.positionForm.address
+        }).then((res) => {
+          console.log(res.data);
+          if (res.data.infocode === '10000') {
+            this.restaurants = res.data.tips
+            // this.center = res.data.
+            console.log(this.restaurants);
+          }
+        })
+      } else {
+        this.restaurants = []
+      }
+    },
+    changeRange (val) {
+      // console.log(val);
+      if (val === 1) {
+        this.circles[0].radius = 500
+      } else if (val === 2) {
+        this.circles[0].radius = 1000
+      } else if (val === 3) {
+        this.circles[0].radius = 1500
+      } else if (val === 4) {
+        this.circles[0].radius = 2000
+      }
+    },
+    isShowtext (val1, val2) {
+      // console.log(val1, val2);
+      this.center = val2.split(',')
+      console.log(this.center);
+      this.markers[0].position = val2.split(',')
+      this.circles[0].center = val2.split(',')
+      this.positionForm.address = val1
+      this.restaurants = []
+    },
+
+    async fn () {
+      // 获取所属单位列表展示
+      const data1 = {
+        menuCode: localStorage.getItem('code')
+      }
+      const res = await getDataFilter(data1)
+      if (res.data.code === 200) {
+        this.unitList = res.data.data.filters
+        const comId = JSON.parse(localStorage.getItem('login')).companyId
+        this.unitList.forEach(ele => {
+          if (ele.companyId === comId) {
+            const defaultList = []
+            defaultList.push(ele)
+            this.checkList = defaultList
+            // console.log(defaultList, ele)
+          }
+        });
+        this.currentCompanyIds = res.data.data.currentCompanyIds
+        // console.log(this.checkList)
+      }
+      this.getTransferStationList()
+
+      // 获取新增框内所属单位
+      const data3 = {
+        id: JSON.parse(localStorage.getItem('login')).companyId
+      }
+      const res3 = await childCompanyList(data3)
+      this.companyIdList = res3.data.data
+      this.drawerForm.companyId = data3.id
+
+      // 负责人列表
+      const data4 = {
+        companyId: JSON.parse(localStorage.getItem('login')).companyId
+      }
+      const res4 = await employeeListing(data4)
+      console.log(res4);
+      // this.peopleRestaurants = res4.data.data
+      res4.data.data.forEach(result => this.peopleRestaurants.push({ 'value': result.name, 'id': result.id }))
+
+      // 获取街道列表
+      const data5 = {
+        isTree: true,
+        parentId: 0
+      }
+      const res5 = await getRegionLocale(data5)
+      console.log(res5)
+      this.regionLocaleList = res5.data.data
+    },
+    // 获取中转站列表
+    async getTransferStationList () {
+      // 中转站列表
+      const data2 = {
+        dataFilters: this.checkList,
+        page: this.currentPage,
+        limit: this.pageSize,
+        name: this.form.name,
+        companyId: this.form.companyId,
+        regionLocaleId: this.form.regionLocaleId,
+        isSetArea: this.form.isSetArea
+      }
+      const res2 = await transferStationShareList(data2)
+      console.log(res2.data.data.records);
+      this.total = res2.data.data.total
+      this.tableData = res2.data.data.records
+      this.privilegeCodes = JSON.parse(localStorage.getItem('login')).privilegeCodes
+      console.log(this.privilegeCodes)
+    },
+
+    handleSizeChange (val) {
+      this.pageSize = val
+      this.getTransferStationList()
+    },
+    handleCurrentChange (val) {
+      this.currentPage = val
+      this.getTransferStationList()
+    },
+
+    // 上传图片
+    handleAvatarSuccess (res, file) {
+      console.log(res);
+      this.imageUrl = true
+      this.drawerForm.picUrl = res.data.url
+    },
+
+    // 新建中转站
+    addTransferStation () {
+      console.log(this.drawerForm);
+      // 校验表单
+      this.$refs.createRuleForm.validate(valid => {
+        if (valid) {
+          this.drawerForm.regionLocaleId = this.drawerForm.regionLocaleId.pop()
+          let aaa = this.peopleRestaurants.filter(res => res.value === this.drawerForm.employeeId)
+          if (aaa.length > 0) {
+            console.log('哈哈哈');
+            this.drawerForm.employeeId = aaa[0].id
+          } else {
+            this.drawerForm.employeeId = ''
+          }
+          const data = this.drawerForm
+          transferStationAdd(data).then(res => {
+            console.log(res);
+            if (res.data.code === 200) {
+              this.getTransferStationList()
+              this.$message.success('新建成功')
+              this.newDrawer = false
+              // 重置表单
+              this.$refs.createRuleForm.resetFields()
+              this.imageUrl = ''
+            }
+          })
+        }
+      })
+    },
+
+    // 删除中转站
+    showDeleteDrawer (id) {
+      transferStationDelete(id).then(res => {
+        console.log(res);
+        if (res.data.code === 200) {
+          this.$message.success('删除成功')
+          this.getTransferStationList()
+        }
+      })
+    },
+
+    // 查看详情
+    viewDetail (id) {
+      this.viewDrawer = true
+      this.recordId = id
+      transferStationView(id).then(res => {
+        console.log(res);
+        if (res.data.code === 200) {
+          this.drawerForm = res.data.data
+        }
+      })
+      this.timeChange()
+    },
+
+    // 查看历史编辑记录
+    timeChange () {
+      const data = {
+        'tableName': 'transferStation',
+        'recordId': this.recordId,
+        'timeInterval': this.time
+      }
+      dataDictItem(data).then(res => {
+        console.log(res)
+        this.infoList = res.data.data
+      })
+    },
+
+    viewHandleClose (done) {
+      this.$confirm('确认关闭？')
+        .then(_ => {
+          this.viewDrawer = false
+          done();
+        })
+        .catch(_ => {});
+    },
+
+    regionLocaleHandleChange (val) {
+
+    },
+
+    // 模糊查询负责人
+    querySearch (queryString, cb) {
+      let restaurants = this.peopleRestaurants;
+      var results = queryString ? restaurants.filter(this.createFilter(queryString)) : restaurants;
+      // 调用 callback 返回建议列表的数据
+      cb(results);
+    },
+    createFilter (queryString) {
+      return (restaurant) => {
+        return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
+      };
+    },
+    loadAll () {
+      return this.peopleRestaurants
+    },
+    handleSelect (item) {
+      console.log(item);
+    },
+
+    // 查询中转站列表
+    searchTransferStation () {
+      console.log(this.form);
+      const data = this.form
+      if (this.form.regionLocaleId !== '') {
+        data.regionLocaleId = this.form.regionLocaleId.pop()
+      }
+      data.page = this.currentPage
+      data.limit = this.pageSize
+      data.dataFilters = this.checkList
+      transferStationShareList(data).then(res => {
+        console.log(res);
+        if (res.data.code === 200) {
+          this.tableData = res.data.data.records
+        }
+      })
+    },
+
+    // 重置查询表单
+    resetSearchForm () {
+      console.log('重置');
+      this.$refs.researchForm.resetFields()
+    },
+
+    // 导出表格
+    async exportExcel () {
+      const data = this.form
+      if (this.form.regionLocaleId !== '') {
+        data.regionLocaleId = this.form.regionLocaleId.pop()
+      }
+      data.page = this.currentPage
+      data.limit = this.pageSize
+      data.dataFilters = this.checkList
+      const res = await transferStationExport(data)
+      this.exportTableData = res.data.data
+      import('../../assets/js/Export2Excel.js').then(excel => {
+        const tHeader = ['所属单位', '所属街道', '中转站名称', '状态']
+        const filterVal = ['companyName', 'regionLocaleName', 'name', 'status']
+        const list = this.exportTableData
+        const data = this.formatJson(filterVal, list)
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: this.filename,
+          autoWidth: this.autoWidth,
+          bookType: this.bookType
+        })
+      })
+    },
+
+    // 修改数据格式
+    formatJson (filterVal, jsonData) {
+      console.log(filterVal, jsonData)
+      return jsonData.map(v => filterVal.map(j => {
+        return v[j]
+      }))
+    }
+
+  }
+
+}
+</script>
+<style >
+:focus {
+  outline: 0;
+}
+</style>
+<style  lang="less" scoped>
+   .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 150px;
+    height: 150px;
+    line-height: 150px;
+    text-align: center;
+    border: 1px solid #eee;
+  }
+  .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
+  }
+.station {
+  height: 100%;
+  .main {
+    background-color: #fff;
+    display: flex;
+    border-left: 1px solid #eee;
+    box-sizing: border-box;
+
+    .left {
+            width: 270px;
+            background-color: #fff;
+            height: 100%;
+    }
+    .right {
+            flex: 1;
+             height: 80vh;
+            overflow-x: hidden;
+            overflow-y: scroll;
+            background-color: #fff;
+            border-left: 1px solid #eee;
+            padding:  0 16px;
+            box-sizing: border-box;
+                    .Inquire {
+                    /deep/.el-form {
+                      /deep/.el-form-item {
+                        /deep/ .el-form-item__content {
+                          width: 100%;
+                          /deep/ .el-select {
+                            width: 100%;
+            }
+          }
+        }
+      }
+    }
+              /deep/
+    .el-table
+    .el-table__header-wrapper
+    .el-table__header
+    .has-gutter
+    tr
+    th {
+    background-color: rgba(245, 247, 250, 1) !important;
+  }
+    }
+
+  }
+        .span {
+    cursor: pointer;
+  }
+  .span:hover {
+    text-decoration: underline;
+    color: #237BFF;
+  }
+  // 抽屉的样式
+              .el-drawer__wrapper {
+                    position: fixed;
+                    z-index: 300;
+                    top: 105px;
+                    right: 0;
+                    width: 100%;
+                    height: calc(100% - 105px);
+
+                  .el-cascader {
+                    width: 100%;
+                  }
+                  .el-autocomplete {
+                    width: 100%;
+                  }
+
+                  /deep/.el-drawer__header {
+                      height: 64px;
+                      box-sizing: border-box;
+                      padding-top: 0;
+                      font-size: 16px;
+                      font-weight: 500;
+                      color: rgba(48, 49, 51, 1);
+                      border-bottom: 1px solid #eee;
+                      margin-bottom: 0;
+                      padding: 30px;
+                  }
+              /deep/.el-drawer__body {
+              padding:0 32px;
+              height: 100%;
+              }
+                     /deep/.el-form  {
+                    //  padding: 0 32px;
+                     box-sizing: border-box;
+                     padding-right: 32px;
+                     padding-top:32px ;
+                         .el-form-item {
+                           margin-bottom: 10px;
+                          /deep/ .el-form-item__label {
+                                    color: #909399;
+                           }
+                           .el-form-item__content {
+                             width: 100%;
+                             margin-left: 0 !important;
+                             .el-select {
+                               width: 100%;
+                             }
+                           }
+                         }
+                         .last-item {
+                           .el-form-item__label {
+                             width: 100%;
+                             text-align: left;
+                           }
+                         }
+                     }
+                    /deep/ .saveAndCancle{
+                                    width: 100%;
+                                    border-top: 1px solid #eee;
+                                    position: absolute;
+                                    bottom: 0px;
+                                    right: 0px;
+                                    background: #fff;
+                                    height: 65px;
+                                    padding-left: 40px;
+                                    padding-right: 34px;
+                                    .el-button {
+                                      margin-left: 20px;
+                                      float: right;
+                                      margin-top: 13px;
+                                    }
+                     }
+
+                /deep/.el-drawer.rtl {
+                  width: calc(100% - 305px) !important;
+                  box-shadow: none;
+                  border-left: 1px solid #eee;
+                }
+                 }
+          /deep/ .el-date-editor  {
+          width: 100%;
+        }
+    .map {
+       height: 60vh;
+       border:1px solid #ccc;
+       .amap-page-container {width:100%; height: 60vh; }
+    }
+    .info {
+            padding-right:30px;
+         .el-form {
+              /deep/.el-form-item {
+                margin-bottom: 10px;
+                border-bottom: 1px solid rgba(228,231,237,1);
+              }
+              }
+          }
+          .dynamic {
+           padding-left:16px ;
+           padding-right:10px ;
+          .all {
+            height: 48px;
+            line-height: 48px;
+            width: 100%;
+            padding-left: 15px;
+            box-sizing: border-box;
+            position: relative;
+            background-color: rgba(245,247,250,1);
+            span {
+               width:64px;
+                height:16px;
+                font-size:16px;
+                font-family:PingFang SC;
+                font-weight:500;
+                color:rgba(48,49,51,1);
+            }
+            .el-select {
+              position: absolute;
+              top: 8px;
+              right: 16px;
+              height: 32px !important;
+             /deep/ .el-input {
+                height: 100%;
+                .el-input__inner {
+                    height: 100%;
+                    position: relative;
+                    top: -7px;
+                    right: 0;
+                }
+                /deep/ .el-input__suffix {
+                   display: none !important;
+                 }
+              }
+            }
+            .arrow {
+              position: absolute;
+              top: 16px;
+              right: 22px ;
+              // font-size: 18px;
+            }
+          }
+          .box {
+             height: 50vh;
+            overflow-x: hidden;
+            overflow-y: scroll;
+          .allInfo {
+            height: 72px;
+            padding: 15px;
+            box-sizing: border-box;
+            border-bottom:1px solid rgba(228,231,237,1);
+            .top {
+              overflow: hidden;
+              .oper {
+                float: left;
+              }
+              .infoTime {
+                float: right;
+              }
+            }
+          }
+          }
+
+        }
+   .Search_address {
+     width: auto;
+     height: 25vh;
+     overflow-x: hidden;
+     overflow-y: scroll;
+     position: absolute;
+     z-index: 999;
+       top: 88px;
+       padding: 15px;
+       box-sizing: border-box;
+       border-radius: 5px;
+       left: 0;
+       border: 1px solid #ccc;
+       background-color: #fff;
+   }
+}
+
+</style>

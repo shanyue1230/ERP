@@ -1,0 +1,742 @@
+<template>
+  <div class="station">
+    <el-breadcrumb separator="/">
+      <el-breadcrumb-item>环卫设施点</el-breadcrumb-item>
+      <el-breadcrumb-item>道班房</el-breadcrumb-item>
+    </el-breadcrumb>
+    <div class="xf-main">
+      <div class="xf-left">
+        <belongUnit :unitList="unitList" @handleChange="selectUnit"></belongUnit>
+      </div>
+      <div class="xf-right">
+        <el-form :inline="true" :model="listQuery" class="demo-form-inline">
+          <el-row>
+            <el-col :span="5">
+              <!-- 道班房名称 -->
+              <el-form-item label="道班房名称:" prop="name">
+                <el-input v-model="listQuery.name" placeholder="请输入道班房名称"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="5">
+              <!-- 所属单位 -->
+              <el-form-item label="所属单位:" prop="companyId">
+                <el-select v-model="listQuery.companyId" placeholder="全部">
+                  <el-option
+                    v-for="item in positionOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  ></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="5">
+              <!-- 所属街道 -->
+              <el-form-item label="所属街道:" prop="streetId">
+                <el-select v-model="listQuery.streetId" placeholder="全部">
+                  <el-option
+                    v-for="item in options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  ></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col style="width: 250px;">
+              <!-- 操作 -->
+              <el-form-item
+                style="padding-top:40px;box-sizing: border-box; width:auto;margin: 0; margin-left:16px"
+              >
+                <el-button type="primary">确定</el-button>
+                <el-button
+                  type="success"
+                  icon="el-icon-arrow-down"
+                  style="width: 70px;position: relative; padding-left: 10px;"
+                  @click="expand"
+                >展开</el-button>
+                <el-button @click="resetSearchForm">重置</el-button>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <!-- 展开的表单 -->
+          <div v-show="show">
+            <el-row>
+              <el-col :span="5">
+                <!-- 是否设置区域 -->
+                <el-form-item label="是否设置区域:" prop="deptId">
+                  <el-select v-model="listQuery.hasposition" placeholder="全部">
+                    <el-option
+                      v-for="item in positionOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    ></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+        </el-form>
+
+        <!-- 新增 + 导出 -->
+        <div style="margin-top:20px;">
+          <el-button type="primary" @click="showDrawer">新增</el-button>
+          <el-button type="warning" style="float: right;">导出</el-button>
+        </div>
+
+        <!-- 表格 -->
+        <!-- height="" -->
+        <el-table ref="multipleTable" :data="tableData" tooltip-effect="dark" height="65%">
+          <el-table-column type="selection"></el-table-column>
+          <el-table-column label="No." prop="no"></el-table-column>
+          <el-table-column prop="companyId" label="所属单位"></el-table-column>
+          <el-table-column prop="streetId" label="所属街道"></el-table-column>
+          <el-table-column prop="name" label="道班房名称"></el-table-column>
+          <el-table-column prop="status" label="状态">
+            <template v-slot="{row}">
+              <span v-if="row.status===0" style="color:#67C23A">有效</span>
+              <span v-else-if="row.status===1" style="color:#F56C6C">失效</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="operate" label="操作" width="200px">
+            <span class="span">编辑</span>&nbsp;&nbsp;
+            <span style="color:#ccc">|</span>&nbsp;&nbsp;
+            <span class="span" @click="viewDetail">查看详情</span>&nbsp;&nbsp;
+            <span style="color:#ccc">|</span>&nbsp;&nbsp;
+            <span class="span">定位</span>
+            <span style="color:#ccc">|</span>&nbsp;&nbsp;
+            <span class="span">删除</span>
+          </el-table-column>
+        </el-table>
+
+        <!-- 分页 -->
+        <el-pagination
+          style="margin-top: 16px;"
+          :current-page="1"
+          :page-sizes="[10, 20, 30, 40]"
+          :page-size="10"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="200"
+        ></el-pagination>
+
+        <!-- 新增抽屉 -->
+        <el-drawer
+          title="新建道班房"
+          :modal="false"
+          :append-to-body="true"
+          :visible.sync="drawer"
+          :direction="direction"
+          :before-close="handleClose"
+        >
+          <el-form class="create-el-form" v-model="formData">
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="所属单位" prop="companyId">
+                  <el-select v-model="formData.companyId" placeholder="请选择">
+                    <el-option
+                      v-for="item in options"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    ></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="所属街道" prop="streetId">
+                  <el-select v-model="formData.streetId" placeholder="请选择">
+                    <el-option
+                      v-for="item in options"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    ></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <!-- -------------- -->
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="道班房名称" prop="name">
+                  <el-input type="text" placeholder="请输入道班房名称" v-model="formData.name"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="地址" prop="address">
+                  <el-input type="text" placeholder="请输入地址" v-model="formData.address"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <!-- -------------- -->
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="启用日期" prop="startDate">
+                  <el-date-picker
+                    v-model="formData.startDate"
+                    type="date"
+                    placeholder="选择日期"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    :editable="false"
+                  ></el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="建筑面积" prop="area">
+                  <el-input type="number" placeholder="请输入建筑面积" v-model="formData.area"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <!-- -------------- -->
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="负责人" prop="responsiblePerson">
+                  <el-select v-model="formData.responsiblePerson" placeholder="请选择">
+                    <el-option
+                      v-for="item in options"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    ></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="场地电话" prop="placePhone">
+                  <el-input type="text" placeholder="请输入场地电话" v-model="formData.placePhone"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <!-- -------------- -->
+            <!-- <el-row>
+              <el-col :span="12">
+                <el-form-item label="设备编号" prop="deviceNo">
+                  <el-input type="text" placeholder="请输入场地电话" v-model="formData.deviceNo"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="设备状态" prop="status">
+                  <el-select v-model="formData.status" placeholder="请选择设备状态" disabled>
+                    <el-option
+                      v-for="item in sstaus"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    ></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row> -->
+            <!-- -------------- -->
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="照片" prop="deviceNo">
+                  <el-upload
+                    class="avatar-uploader"
+                    action="https://jsonplaceholder.typicode.com/posts/"
+                    :show-file-list="false"
+                  >
+                    <img v-if="imageUrl" :src="formData.pic" class="avatar" />
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                  </el-upload>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-button style="margin: 15px 32px 0 15px;float: right;">取消</el-button>
+            <el-button type="primary" style="margin: 15px 15px 0 15px;float: right;">确认</el-button>
+          </el-form>
+        </el-drawer>
+
+        <!-- 查看详情抽屉 -->
+        <el-drawer
+          title="查看详情"
+          :modal="false"
+          :append-to-body="true"
+          :visible.sync="viewDrawer"
+          :direction="direction"
+          :before-close="handleClose"
+        >
+          <el-form
+            class="view-el-form"
+            label-width="120px"
+            style="padding-bottom: 100px; padding-top: 20px;"
+          >
+            <!-- 账号信息 -->
+            <drawer-left>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+              <el-form-item label="所属单位:" style="border-bottom: 2px solid #eee;">1111</el-form-item>
+            </drawer-left>
+            <drawer-right>
+              <div class="all">
+                <span>所有动态</span>
+                <el-select
+                  v-model="time"
+                  placeholder="请选择"
+                  style="width:96px;height:32px !important;"
+                >
+                  <el-option
+                    v-for="item in timeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  ></el-option>
+                </el-select>
+                <i v-if="!selst" class="el-icon-caret-bottom arrow"></i>
+                <i v-if="selst" class="el-icon-caret-top arrow"></i>
+              </div>
+              <!-- all info -->
+              <!-- <div class="allInfo" v-for="item in infoList" :key="item.id">
+              <div class="top" style="margin-bottom:5px">
+                <div class="oper" style="color:rgba(144,147,153,1);"> <span >{{item.editor}}</span> <span>{{item.isCreated? '创建':'编辑'}}</span>了&nbsp;&nbsp;&nbsp;<span>{{item.mainContent}}</span></div>
+                <div class="infoTime" style="color:rgba(144,147,153,1);;">
+                  {{item.editTime}}
+                </div>
+              </div>
+              <div class="bottom"> <span style="color:rgba(144,147,153,1); margin-right:10px">{{item.isCreated? '创建':'修改'}}</span><span> {{item.isCreated? item.mainContent:item.fieldName}}</span></div>
+              </div>-->
+            </drawer-right>
+            <div class="view-footer" style="position: fixed; bottom: 15px; right: 50px;">
+              <el-button style="margin: 15px 32px 0 15px;float: right;">取消</el-button>
+              <el-button type="primary" style="margin: 15px 15px 0 15px;float: right;">确认</el-button>
+            </div>
+          </el-form>
+        </el-drawer>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import belongUnit from '../../components/belong-unit';
+export default {
+  data () {
+    return {
+      sstaus: [
+        {
+          value: 0,
+          label: '正常'
+        },
+        {
+          value: 1,
+          label: '失效'
+        }
+      ],
+      positionOptions: [
+        {
+          value: 0,
+          label: '否'
+        },
+        {
+          value: 1,
+          label: '是'
+        }
+      ],
+      selst: false,
+      time: 0,
+      timeOptions: [
+        {
+          value: 0,
+          label: '近一周'
+        },
+        {
+          value: 1,
+          label: '近一月'
+        },
+        {
+          value: 2,
+          label: '近一年'
+        }
+      ],
+      drawer: false,
+      viewDrawer: false,
+      imageUrl: '',
+      direction: 'rtl',
+      show: false,
+      unitList: [
+        { id: 1, label: 'a', name: '单位名称1' },
+        { id: 2, label: 'b', name: '单位名称2' }
+      ],
+      options: [
+        { value: '1', label: '在职' },
+        { value: '2', label: '离职' }
+      ],
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
+        name: undefined,
+        companyId: undefined,
+        streetId: undefined,
+        hasposition: undefined
+      },
+      // 表格数据
+      tableData: [
+        {
+          no: 1,
+          companyId: 11111,
+          streetId: 22222,
+          name: 33333,
+          address: 44444,
+          startDate: '2020-01-15',
+          area: 55555,
+          responsiblePerson: '小高',
+          placePhone: 13966074552,
+          deviceNo: 'xfr001',
+          status: 0
+        }
+      ],
+      // 新建员工表单
+      formData: {
+        companyId: undefined,
+        streetId: undefined,
+        name: undefined,
+        address: undefined,
+        startDate: undefined,
+        area: undefined,
+        responsiblePerson: undefined,
+        placePhone: undefined,
+        deviceNo: undefined,
+        pic: undefined,
+        status: 0
+      }
+    };
+  },
+  methods: {
+    /**
+     * 重置列表搜索条件
+     */
+    resetSearchForm () {
+      this.listQuery.name = undefined;
+      this.listQuery.companyId = undefined;
+      this.listQuery.streetId = undefined;
+      this.listQuery.hasposition = undefined;
+    },
+    showDrawer () {
+      this.drawer = true;
+    },
+    handleClose (done) {
+      this.$confirm('确认关闭？')
+        .then(_ => {
+          done();
+        })
+        .catch(_ => {});
+      // this.drawer = false
+    },
+    // 被选中的单位名称
+    selectUnit (date) {
+      console.log(date);
+    },
+    // 是否展开
+    expand () {
+      this.show = !this.show;
+    },
+    // 查看详情
+    viewDetail () {
+      this.viewDrawer = true;
+    }
+  },
+  components: {
+    belongUnit
+  }
+};
+</script>
+
+<style lang="less" scoped>
+.station {
+  height: 100%;
+  display: flex;
+  flex-flow: column;
+}
+.xf-main {
+  flex: 1;
+  display: flex;
+  height: 100%;
+  border-left: 1px solid #eee;
+  box-sizing: border-box;
+
+  .xf-left {
+    width: 270px;
+    background-color: #fff;
+    height: 100%;
+  }
+  .xf-right {
+    flex: 1;
+    height: 100%;
+    background-color: #fff;
+    border-left: 1px solid #eee;
+    padding: 0 30px 0 16px;
+    box-sizing: border-box;
+    .el-col:nth-child(-n + 3) {
+      padding-right: 10px;
+    }
+    /deep/.el-form-item__content {
+      width: 100%;
+    }
+    /deep/.el-select {
+      width: 100% !important;
+    }
+  }
+}
+.el-drawer__wrapper {
+  position: fixed;
+  z-index: 300;
+  top: 105px;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  .title {
+    height: 48px;
+    line-height: 46px;
+    font-size: 16px;
+    font-family: PingFang SC;
+    font-weight: 500;
+    color: rgba(48, 49, 51, 1);
+    border-bottom: 1px solid #eee;
+    margin-top: 32px;
+    span {
+      display: inline-block;
+      padding: 0 5px;
+      height: 48px;
+      border-bottom: 1px solid #237bff;
+    }
+  }
+  .el-col {
+    padding-right: 32px;
+  }
+  .el-select {
+    width: 100%;
+  }
+  /deep/.el-form-item__label {
+    color: #909399;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  /deep/.el-drawer__body {
+    padding-left: 32px;
+    height: 100%;
+  }
+  /deep/.el-drawer__header {
+    height: 64px;
+    box-sizing: border-box;
+    padding-top: 0;
+    font-size: 16px;
+    font-family: PingFang SC;
+    font-weight: 500;
+    color: rgba(48, 49, 51, 1);
+    border-bottom: 1px solid #eee;
+    margin-bottom: 0;
+    padding: 30px;
+  }
+  /deep/.el-drawer.rtl {
+    width: calc(100% - 305px) !important;
+    box-shadow: none;
+    border-left: 1px solid #eee;
+  }
+}
+.el-table {
+  .span {
+    cursor: pointer;
+  }
+  .span:hover {
+    text-decoration: underline;
+    color: #237bff;
+  }
+}
+
+.el-form-item {
+  margin-bottom: 0;
+  width: 100%;
+  margin: 0;
+}
+/deep/label.el-form-item__label {
+  width: 100%;
+  text-align: left;
+}
+/deep/.el-date-editor {
+  width: 100%;
+  margin-right: 10px;
+}
+/deep/.el-input {
+  width: 100%;
+  margin-right: 10px;
+}
+
+// 新增抽屉样式
+.el-drawer__wrapper .create-el-form {
+  height: 90%;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  padding-bottom: 80px;
+  position: relative;
+}
+
+// 详情抽屉样式
+.el-drawer__wrapper .view-el-form {
+  height: 90%;
+  padding-bottom: 80px;
+  display: flex;
+  position: relative;
+  drawer-left {
+    height: 100%;
+    flex: 1;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    padding: 15px;
+  }
+  drawer-right {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    flex: 1;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 15px;
+    .all {
+      height: 48px;
+      line-height: 48px;
+      width: 100%;
+      padding-left: 15px;
+      box-sizing: border-box;
+      position: relative;
+      background-color: rgba(245, 247, 250, 1);
+      span {
+        width: 64px;
+        height: 16px;
+        font-size: 16px;
+        font-family: PingFang SC;
+        font-weight: 500;
+        color: rgba(48, 49, 51, 1);
+      }
+      .el-select {
+        position: absolute;
+        top: 8px;
+        right: 16px;
+        height: 32px !important;
+        /deep/.el-input {
+          height: 100%;
+          /deep/.el-input__inner {
+            height: 100%;
+            position: relative;
+            top: -7px;
+            right: 0;
+          }
+          /deep/ .el-select__caret {
+            display: none !important;
+          }
+        }
+      }
+      .arrow {
+        position: absolute;
+        top: 16px;
+        right: 22px;
+      }
+    }
+    .allInfo {
+      height: 72px;
+      padding: 15px;
+      box-sizing: border-box;
+      border-bottom: 1px solid rgba(228, 231, 237, 1);
+      .top {
+        overflow: hidden;
+        .oper {
+          float: left;
+        }
+        .infoTime {
+          float: right;
+        }
+      }
+    }
+  }
+}
+
+// 上传图片样式
+.avatar-uploader .el-upload {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.avatar-uploader .el-upload:hover {
+  border-color: #409eff;
+}
+.avatar-uploader-icon {
+  font-size: 24px;
+  color: #8c939d;
+  width: 120px;
+  height: 120px;
+  line-height: 120px;
+  text-align: center;
+  border: 1px dashed #ccc;
+}
+.avatar {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+
+.el-table {
+  ::-webkit-scrollbar {
+    /*滚动条整体样式*/
+
+    width: 4px; /*高宽分别对应横竖滚动条的尺寸*/
+
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    /*滚动条里面小方块*/
+
+    border-radius: 5px;
+
+    background: rgba(122, 140, 162, 1);
+  }
+
+  ::-webkit-scrollbar-track {
+    /*滚动条里面轨道*/
+
+    border-radius: 0;
+    // display: none;
+    background: rgba(0, 0, 0, 0.1);
+  }
+}
+
+/*滚动条样式*/
+
+::-webkit-scrollbar {
+  /*滚动条整体样式*/
+
+  width: 4px; /*高宽分别对应横竖滚动条的尺寸*/
+
+  height: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  /*滚动条里面小方块*/
+
+  border-radius: 5px;
+
+  background: rgba(122, 140, 162, 1);
+}
+
+::-webkit-scrollbar-track {
+  /*滚动条里面轨道*/
+
+  border-radius: 0;
+  // display: none;
+  background: rgba(0, 0, 0, 0.1);
+}
+</style>

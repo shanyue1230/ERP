@@ -1,0 +1,162 @@
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+
+Vue.use(VueRouter)
+
+const routes = [{
+  path: '/',
+  redirect: '/login'
+},
+{
+  path: '/login',
+  name: 'login',
+  component: resolve => require(['../views/login.vue'], resolve)
+},
+{
+  path: '/sysModules',
+  name: 'sysModules',
+  component: resolve => require(['../views/sysModules.vue'], resolve)
+},
+{
+  path: '/basic',
+  name: 'basic',
+  component: resolve => require(['../views/basic.vue'], resolve),
+  children: [{
+    path: '/package',
+    name: 'package',
+    component: resolve => require(['../views/deploy/package.vue'], resolve)
+  },
+  {
+    path: '/vehicleDevice',
+    name: 'vehicleDevice',
+    component: resolve => require(['../views/./deploy/vehicleDevice.vue'], resolve)
+  },
+  {
+    path: '/stationDevice',
+    name: 'stationDevice',
+    component: resolve => require(['../views/./deploy/stationDevice.vue'], resolve)
+  },
+  {
+    path: '/office',
+    name: 'office',
+    component: resolve => require(['../views/deploy/office.vue'], resolve)
+  },
+  {
+    path: '/company',
+    name: 'company',
+    component: resolve => require(['../views/deploy/company.vue'], resolve)
+  },
+  {
+    path: '/license',
+    name: 'license',
+    component: resolve => require(['../views/deploy/licence.vue'], resolve)
+  },
+  {
+    path: '/workplace',
+    name: 'workplace',
+    component: resolve => require(['../views/workplace/workplace.vue'], resolve)
+  },
+  {
+    path: '/department',
+    name: 'department',
+    component: resolve => require(['../views/base/department.vue'], resolve)
+  },
+  {
+    path: '/position',
+    name: 'position',
+    component: resolve => require(['../views/base/position.vue'], resolve)
+  },
+  {
+    path: '/employee',
+    name: 'employee',
+    component: resolve => require(['../views/base/employee.vue'], resolve)
+  },
+  {
+    path: '/station',
+    name: 'station',
+    component: resolve => require(['../views/base/station.vue'], resolve)
+  },
+  {
+    path: '/house',
+    name: 'house',
+    component: resolve => require(['../views/base/house.vue'], resolve)
+  },
+  {
+    path: '/public',
+    name: 'public',
+    component: resolve => require(['../views/base/public.vue'], resolve)
+  },
+  {
+    path: '/driver',
+    name: 'driver',
+    component: resolve => require(['../views/base/driver.vue'], resolve)
+  },
+  {
+    path: '/role',
+    name: 'role',
+    component: resolve => require(['../views/base/role.vue'], resolve)
+  },
+  {
+    path: '/sample',
+    name: 'sample',
+    component: resolve => require(['../views/base/sample.vue'], resolve)
+  },
+  {
+    path: '/dataRule',
+    name: 'dataRule',
+    component: resolve => require(['../views/base/dataRule.vue'], resolve)
+  },
+  {
+    path: '/LicensInformation',
+    name: 'LicensInformation',
+    component: resolve => require(['../views/base/LicensInformation.vue'], resolve)
+  },
+  {
+    path: '/domesticWaste',
+    name: 'domesticWaste',
+    component: resolve => require(['../views/base/domesticWaste.vue'], resolve)
+  },
+  {
+    path: '/propertyManagement',
+    name: 'propertyManagement',
+    component: resolve => require(['../views/base/propertyManagement.vue'], resolve)
+  },
+  {
+    path: '/constructionWaste',
+    name: 'constructionWaste',
+    component: resolve => require(['../views/base/constructionWaste.vue'], resolve)
+  },
+  {
+    path: '/station',
+    name: 'station',
+    component: resolve => require(['../views/base/station.vue'], resolve)
+  },
+  {
+    path: '/community',
+    name: 'community',
+    component: resolve => require(['../views/base/community.vue'], resolve)
+  },
+  {
+    path: '/vehicleDeviceList',
+    name: 'vehicleDeviceList',
+    component: resolve => require(['../views/base/vehicleDevice.vue'], resolve)
+  },
+  {
+    path: '/stationDeviceList',
+    name: 'stationDeviceList',
+    component: resolve => require(['../views/base/stationDevice.vue'], resolve)
+  },
+  {
+    path: '/lounge',
+    name: 'lounge',
+    component: resolve => require(['../views/base/lounge.vue'], resolve)
+  }
+  ]
+}
+]
+
+const router = new VueRouter({
+  routes
+})
+
+export default router

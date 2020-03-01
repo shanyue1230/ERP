@@ -1,0 +1,914 @@
+import request from '../util/request'
+// 登录接口
+export function Login (data) {
+  return request({
+    url: '/login',
+    method: 'post',
+    data
+  })
+}
+// 登出接口
+export function Logout (data) {
+  return request({
+    url: '/logout',
+    method: 'get',
+    data
+  })
+}
+// 获取菜单接口
+export function getMenus (data) {
+  return request({
+    url: '/menu/list',
+    method: 'post',
+    data
+  })
+}
+
+// 车载设备新增
+export function vehicleDeviceAdd (data) {
+  return request({
+    url: '/vehicleDevice/add',
+    method: 'post',
+    data
+  })
+}
+
+// 车载设备列表
+export function vehicleDeviceList (data) {
+  return request({
+    url: '/vehicleDevice/list',
+    method: 'post',
+    data
+  })
+}
+// 车载设备删除
+export function vehicleDeviceDelete (data) {
+  return request({
+    url: '/vehicleDevice/delete',
+    method: 'post',
+    data
+  })
+}
+// 车载设备启用
+export function vehicleDeviceEnable (data) {
+  return request({
+    url: 'vehicleDevice/enable',
+    method: 'post',
+    data
+  })
+}
+// 车载设备停用
+export function vehicleDeviceDisable (data) {
+  return request({
+    url: '/vehicleDevice/disable',
+    method: 'post',
+    data
+  })
+}
+// 车载设备详情
+export function vehicleDeviceView (data) {
+  return request({
+    url: '/vehicleDevice/view?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 获取行政机构/企业单位列表
+export function companyAdd (data) {
+  return request({
+    url: '/company/list',
+    method: 'post',
+    data
+  })
+}
+
+// 编辑记录接口
+export function dataDictItem (data) {
+  return request({
+    url: '/data/getEditLog',
+    method: 'post',
+    data
+  })
+}
+
+// 车载设备编辑
+export function vehicleDeviceEdit (data) {
+  return request({
+    url: '/vehicleDevice/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 车载设备验证
+export function vehicleDeviceValid (data) {
+  return request({
+    url: '/vehicleDevice/valid',
+    method: 'post',
+    data
+  })
+}
+
+// 车载设备导出
+export function vehicleDeviceExport (data) {
+  return request({
+    url: '/vehicleDevice/export',
+    method: 'post',
+    data
+  })
+}
+
+// 小压站设备列表
+export function stationDeviceList (data) {
+  return request({
+    url: '/stationDevice/list',
+    method: 'post',
+    data
+  })
+}
+
+// 小压站设备新增
+export function stationDeviceAdd (data) {
+  return request({
+    url: '/stationDevice/add',
+    method: 'post',
+    data
+  })
+}
+
+// 小压站设备验证
+export function stationDeviceValid (data) {
+  return request({
+    url: '/stationDevice/valid',
+    method: 'post',
+    data
+  })
+}
+
+// 车载设备删除
+export function stationDeviceDelete (data) {
+  return request({
+    url: '/stationDevice/delete',
+    method: 'post',
+    data
+  })
+}
+
+// 小压站设备启用
+export function stationDeviceEnable (data) {
+  return request({
+    url: '/stationDevice/enable',
+    method: 'post',
+    data
+  })
+}
+
+// 小压站设备停用
+export function stationDeviceDisable (data) {
+  return request({
+    url: '/stationDevice/disable',
+    method: 'post',
+    data
+  })
+}
+
+// 小压站设备详情
+export function stationDeviceView (data) {
+  return request({
+    url: '/stationDevice/view?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 小压站设备编辑
+export function stationDeviceEdit (data) {
+  return request({
+    url: '/stationDevice/edit',
+    method: 'post',
+    data
+  })
+}
+// 小压站设备导出
+export function stationDeviceExport (data) {
+  return request({
+    url: '/stationDevice/export',
+    method: 'post',
+    data
+  })
+}
+// 套餐列表
+export function packageList (data) {
+  return request({
+    url: '/package/list',
+    method: 'post',
+    data
+  })
+}
+// 套餐新增
+
+export function addPackage (data) {
+  return request({
+    url: '/package/add',
+    method: 'post',
+    data
+  })
+}
+
+// 删除套餐
+export function delPackage (id) {
+  return request({
+    url: '/package/delete?id=' + id,
+    method: 'get'
+  })
+}
+
+// 套餐明细
+export function packageView (id) {
+  return request({
+    url: '/package/view?id=' + id,
+    method: 'get'
+  })
+}
+
+// 套餐编辑
+export function editPackage (data) {
+  return request({
+    url: '/package/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 许可证列表
+export function licenseList (data) {
+  return request({
+    url: '/license/list',
+    method: 'post',
+    data
+  })
+}
+
+// 新增许可证
+export function addLicense (data) {
+  return request({
+    url: '/license/add',
+    method: 'post',
+    data
+  })
+}
+
+// 许可证明细
+export function licenseView (id) {
+  return request({
+    url: '/license/view?id=' + id,
+    method: 'get'
+  })
+}
+
+// 许可证编辑
+export function editLicense (data) {
+  return request({
+    url: '/license/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 开始---------yang
+
+// 行政机构管理 列表
+export function companyList (data) {
+  return request({
+    url: '/company/list',
+    method: 'post',
+    data
+  })
+}
+
+// 行政市区
+export function getRegionLocale (data) {
+  return request({
+    url: '/data/getRegionLocale',
+    method: 'post',
+    data
+  })
+}
+
+// 机构分类
+export function dictItem (data) {
+  return request({
+    url: '/data/dictItem',
+    method: 'post',
+    data
+  })
+}
+
+// 机构名称
+export function nameCheckName (data) {
+  return request({
+    url: '/company/check?name=' + data.name + '&id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 机构编码
+export function nameCheckCode (data) {
+  return request({
+    url: '/company/check?prefix=' + data.prefix + '&id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 行政机构新增
+export function officeAdd (data) {
+  return request({
+    url: '/company/add',
+    method: 'post',
+    data
+  })
+}
+
+// 编辑机构新增
+export function officeEdit (data) {
+  return request({
+    url: '/company/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 启用行政机构
+export function enable (data) {
+  return request({
+    url: '/company/enable',
+    method: 'post',
+    data
+  })
+}
+
+// 停用行政机构
+export function disable (data) {
+  return request({
+    url: '/company/disable',
+    method: 'post',
+    data
+  })
+}
+
+// 详情日志
+export function getEditLog (data) {
+  return request({
+    url: '/data/getEditLog',
+    method: 'post',
+    data
+  })
+}
+
+// 详情日志
+export function companyView (data) {
+  return request({
+    url: '/company/view?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+// 结束---------yang
+
+// 开始 ----------   操作权限接口
+
+// 用户列表
+export function userList (data) {
+  return request({
+    url: '/user/list',
+    method: 'post',
+    data
+  })
+}
+
+// 初始密码
+export function initializePassword (data) {
+  return request({
+    url: '/user/initializePassword',
+    method: 'post',
+    data
+  })
+}
+
+// 禁止登陆
+export function forbiddenLogin (data) {
+  return request({
+    url: '/user/forbiddenLogin',
+    method: 'post',
+    data
+  })
+}
+
+// 部门列表（下拉选）
+// departmentList
+export function departmentSelectionList (data) {
+  return request({
+    url: '/department/selectionList',
+    method: 'post',
+    data
+  })
+}
+
+// 用户明细
+export function userView (id) {
+  return request({
+    url: '/user/view?id=' + id,
+    method: 'get'
+  })
+}
+
+// 角色列表
+export function roleList (data) {
+  return request({
+    url: '/role/list',
+    method: 'post',
+    data
+  })
+}
+
+// 用户权限分配
+export function userAssignment (data) {
+  return request({
+    url: '/user/assignment',
+    method: 'post',
+    data
+  })
+}
+
+// 公司拥有菜单权限列表
+export function listByCompanyId (companyId) {
+  return request({
+    url: '/menu/listByCompanyId?companyId=' + companyId,
+    method: 'get'
+  })
+}
+
+// 角色新增
+export function addRole (data) {
+  return request({
+    url: '/role/add',
+    method: 'post',
+    data
+  })
+}
+
+// 角色明细
+export function roleView (id) {
+  return request({
+    url: '/role/view?id=' + id,
+    method: 'get'
+  })
+}
+
+// 角色删除
+export function deleteRole (id) {
+  return request({
+    url: '/role/delete?id=' + id,
+    method: 'get'
+  })
+}
+
+// 角色编辑
+export function editRole (data) {
+  return request({
+    url: '/role/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 结束 ----------   操作权限接口
+
+// 开始 ----------------------- 驾驶员管理
+
+// 驾驶员列表(分页)
+export function driverPagingList (data) {
+  return request({
+    url: '/driver/pagingList',
+    method: 'post',
+    data
+  })
+}
+
+// 所属单位
+export function childCompanyList (data) {
+  return request({
+    url: '/company/childCompanyList',
+    method: 'post',
+    data
+  })
+}
+
+// 新增驾驶员
+export function addDriver (data) {
+  return request({
+    url: '/driver/add',
+    method: 'post',
+    data
+  })
+}
+
+// 员工列表(不分页)
+export function employeeListing (data) {
+  return request({
+    url: '/employee/list',
+    method: 'post',
+    data
+  })
+}
+
+// 数据验证 驾照号码唯一 + 驾照档案号唯一
+export function driverCheck (params) {
+  return request({
+    url: '/driver/check',
+    method: 'get',
+    params
+  })
+}
+
+// 驾驶员明细
+export function driverView (params) {
+  return request({
+    url: '/driver/view',
+    method: 'get',
+    params
+  })
+}
+
+// 修改驾驶员
+export function driverEdit (data) {
+  return request({
+    url: '/driver/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 删除驾驶员
+export function driverDelete (params) {
+  return request({
+    url: '/driver/delete',
+    method: 'get',
+    params
+  })
+}
+
+// 导出表格
+export function driverExport (data) {
+  return request({
+    url: '/driver/driverExport',
+    method: 'post',
+    data
+  })
+}
+
+// 结束 ----------------------- 驾驶员管理
+
+// 部门新增
+export function departmentAdd (data) {
+  return request({
+    url: '/department/add',
+    method: 'post',
+    data
+  })
+}
+
+// 部门编辑
+export function departmentEdit (data) {
+  return request({
+    url: '/department/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 部门启用
+export function departmentEnable (data) {
+  return request({
+    url: '/department/enable?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 部门禁用
+export function departmentDisable (data) {
+  return request({
+    url: '/department/disable?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 部门删除
+export function departmentDelete (data) {
+  return request({
+    url: '/department/delete?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 部门明细
+export function departmentView (data) {
+  return request({
+    url: '/department/view?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 部门验证
+export function departmentCheck (data) {
+  return request({
+    url: '/department/check',
+    method: 'post',
+    data
+  })
+}
+
+// 共享列表
+export function dataRuleList (data) {
+  return request({
+    url: '/dataRule/list',
+    method: 'post',
+    data
+  })
+}
+
+// 可共享公司
+export function getSharedCompany (data) {
+  return request({
+    url: '/data/getSharedCompany',
+    method: 'post',
+    data
+  })
+}
+
+// 可共享部门
+export function getSharedDept (data) {
+  return request({
+    url: '/data/getSharedDept',
+    method: 'post',
+    data
+  })
+}
+
+// 可共享菜单列表
+export function listByShared (data) {
+  return request({
+    url: '/menu/listByShared',
+    method: 'get',
+    data
+  })
+}
+
+// 共享规则新增
+export function dataRuleAdd (data) {
+  return request({
+    url: '/dataRule/add',
+    method: 'post',
+    data
+  })
+}
+
+// 共享规则编辑
+export function dataRuleEdit (data) {
+  return request({
+    url: '/dataRule/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 共享规则删除
+export function dataRuleDelete (data) {
+  return request({
+    url: '/dataRule/delete?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 共享规则明细
+export function dataRuleView (data) {
+  return request({
+    url: '/dataRule/view?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 所属单位
+// export function childCompanyList (data) {
+//   return request({
+//     url: '/company/childCompanyList',
+//     method: 'post',
+//     data
+//   })
+// }
+
+// 结束---------yang
+
+//  岗位管理的分页列表
+export function positionList (data) {
+  return request({
+    url: '/position/pagingList',
+    method: 'post',
+    data
+  })
+}
+//  岗位管理的新增岗位
+export function positionAdd (data) {
+  return request({
+    url: '/position/add',
+    method: 'post',
+    data
+  })
+}
+//  获取部门列表
+export function departmentList (data) {
+  return request({
+    url: '/department/list',
+    method: 'post',
+    data
+  })
+}
+//
+//  获取岗位管理的单位列表
+export function CompanyList (data) {
+  return request({
+    url: '/company/childCompanyList',
+    method: 'post',
+    data
+  })
+}
+// 获取字典信息
+export function dictItemData (data) {
+  return request({
+    url: '/data/dictItemList',
+    method: 'post',
+    data
+  })
+}
+
+// 删除岗位
+export function positionDelete (data) {
+  return request({
+    url: '/position/delete?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 岗位详情
+export function positionView (data) {
+  return request({
+    url: '/position/view?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 修改岗位
+export function positionEdit (data) {
+  return request({
+    url: '/position/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 数据验证
+export function positionCheck (data) {
+  return request({
+    url: '/position/check?name=' + data.name + '&id=' + data.id + '&companyId=' + data.companyId,
+    method: 'get',
+    data
+  })
+}
+
+// 员工管理的员工列表
+export function employeeList (data) {
+  return request({
+    url: '/employee/pagingList',
+    method: 'post',
+    data
+  })
+}
+
+// 数据过滤器
+export function getDataFilter (data) {
+  return request({
+    url: '/data/getDataFilter?menuCode=' + data.menuCode,
+    method: 'get',
+    data
+  })
+}
+
+// 员工管理的 新增员工
+export function employeeAdd (data) {
+  return request({
+    url: '/employee/add',
+    method: 'post',
+    data
+  })
+}
+
+// 岗位列表不分页
+export function positionNoList (data) {
+  return request({
+    url: '/position/list',
+    method: 'post',
+    data
+  })
+}
+
+// 获取部门类型及岗位类型为管理/行政的员工列表
+export function employeeGetAdminTypeList (data) {
+  return request({
+    url: '/employee/getAdminTypeList',
+    method: 'post',
+    data
+  })
+}
+
+// 员工管理的获取区域列表
+export function dataGetRegion (data) {
+  return request({
+    url: '/data/getRegion',
+    method: 'post',
+    data
+  })
+}
+
+// 员工管理的查看明细
+export function employeeView (data) {
+  return request({
+    url: '/employee/view?id=' + data.id,
+    method: 'get',
+    data
+  })
+}
+
+// 员工管理的修改员工
+export function employeeEdit (data) {
+  return request({
+    url: '/employee/edit',
+    method: 'post',
+    data
+  })
+}
+
+// 删除员工
+export function employeeDelete (data) {
+  return request({
+    url: '/employee/delete?id=' + data.id + '&isDeleteHistoryd=' + data.isDeleteHistoryd,
+    method: 'get',
+    data
+  })
+}
+
+// 员工数据验证
+export function employeeCheck (data) {
+  return request({
+    url: '/employee/check',
+    method: 'post',
+    data
+  })
+}
+
+// 员工数据(导出)
+export function employeeExport (data) {
+  return request({
+    url: '/employee/employeeExport',
+    method: 'post',
+    data
+  })
+}
+
+// 员工管理的所属部门的下拉选
+// export function departmentSelectionList (data) {
+//   return request({
+//     url: '/department/selectionList',
+//     method: 'post',
+//     data
+//   })
+// }
+
+// 根据身份证返回年龄 出生年月
+export function dataCheckldCard (data) {
+  return request({
+    url: '/data/checkIdCard',
+    method: 'post',
+    data
+  })
+}
